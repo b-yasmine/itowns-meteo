@@ -33,7 +33,6 @@
         <script src="js/loading_screen.js"></script>
         <script src="../dist/debug.js"></script>
         <script type="text/javascript">
-            // # Simple Globe viewer
 
             // Define initial camera position
             var positionOnGlobe = { longitude: 2.351323, latitude: 48.856712, altitude: 25000000 };
@@ -48,6 +47,15 @@
             // Instanciate iTowns GlobeView*
             var view = new itowns.GlobeView(viewerDiv, positionOnGlobe);
             setupLoadingScreen(viewerDiv, view);
+
+            // **************** WEATHER SENSORS GLOBAL VARIABLES ************************
+            // Urls of all sensors
+            var allSensors = [
+                {text: 'Sonde YSH', value: 'piensg010:3001'},
+                {text: 'Sonde MCM', value: 'piensg009:3000'}, 
+                {text: 'Sonde BMW', value: 'piensg011:3001'}
+            ];
+            // ***************************************************************************
 
             // Dont' instance mini viewer if it's Test env
             miniView = new itowns.GlobeView(miniDiv, positionOnGlobe, {
@@ -126,6 +134,37 @@
             view.controls.addEventListener(itowns.CONTROL_EVENTS.RANGE_CHANGED, () => {
                 updateScaleWidget();
             });
+
+            // ********************************* METEO APP CALLS *************************************
+
+            getPositions();
+
+            // ************************* WEATHER SENSORS APP FUNCTIONS DECLARATIONS ****************************
+
+            // fetch location of all sensors
+            function getPositions(){
+                var promises = [];
+                for (let i = 0; i < allSensors.length; i++) {
+                    promises.push(
+                        fetch('http://'+allSensors[i].value+'/last?capteur_type=location')
+                        .then(result => result.json())
+                        .catch(() => null)
+                    );
+                }
+                Promise.all(promises)
+                .then(promises => {
+                    for (let i = 0; i < promises.length; i++) {
+                        if( promises[i] !=null && promises[i].location !== undefined)
+                            allSensors[i].position = {
+                                lng: Number(promises[i].location.lng), 
+                                lat: Number(promises[i].location.lat) 
+                            };    
+                        }
+                    console.log("Sensors and positions: ", allSensors);
+                    // Draw Markers foreach position
+                })
+            } 
+
         </script>
     </body>
 </html>
