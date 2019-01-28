@@ -98,15 +98,6 @@
                 var miniLayer = new itowns.ColorLayer('OrthoMini', config);
                 miniView.addLayer(miniLayer);
             });
-            // Add two elevation layers.
-            // These will deform iTowns globe geometry to represent terrain elevation.
-            function addElevationLayerFromConfig(config) {
-                config.source = new itowns.WMTSSource(config.source);
-                var layer = new itowns.ElevationLayer(config.id, config);
-                view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe));
-            }
-            itowns.Fetcher.json('./layers/JSONLayers/WORLD_DTM.json').then(addElevationLayerFromConfig);
-            itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addElevationLayerFromConfig);
 
             var menuGlobe = new GuiTools('menuDiv', view);
             var divScaleWidget = document.querySelectorAll('.divScaleWidget')[0];
@@ -165,9 +156,10 @@
                 var THREE = itowns.THREE;
                 var geometry = new THREE.CylinderGeometry(0, 20000, 60000, 8);
                 var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-                var mesh = new THREE.Mesh(geometry, material);
+            
+                var mesh = new THREE.Mesh( geometry.translate(0, -30000, 0), material);
 
-                const coords = new itowns.Coordinates('EPSG:4326', position.lng, position.lat, 30000); // Geographic system
+                const coords = new itowns.Coordinates('EPSG:4326', position.lng, position.lat, 0); // Geographic system
                 const coordinates = coords.as('EPSG:4978'); // Geocentric system
 
                 // position of the mesh
@@ -186,9 +178,10 @@
             }
 
             function updateScaleMarker() {
-                console.log(markers);
                 for (let i = 0; i < markers.length; i++) {
-                    //TODO: SCALE MARKERS
+                    var value = view.controls.pixelsToMeters(33) / 60000 ;
+                    markers[i].mesh.scale.set(value,value,value);
+                    markers[i].mesh.updateMatrixWorld();
                 }
             }
 
