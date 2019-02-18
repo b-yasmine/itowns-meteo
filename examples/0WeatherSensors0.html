@@ -33,7 +33,7 @@
         <script src="js/loading_screen.js"></script>
         <script src="../dist/debug.js"></script>
         <script type="text/javascript">
-
+        
             // Define initial camera position
             var positionOnGlobe = { longitude: 2.351323, latitude: 48.856712, altitude: 2800000 };
             var miniView;
@@ -129,7 +129,13 @@
                     promises.push(
                         fetch('http://'+allSensors[i].value+'/last?capteur_type=location')
                         .then(result => result.json())
-                        .catch(() => null)
+                        .catch(() => {
+                            return (
+                                // If sensor not working use the sample json files
+                                fetch('./json_samples/last_all_'+allSensors[i].value+'.json')
+                                .then(result => result.json())
+                            );
+                        })
                     );
                 }
                 Promise.all(promises)
