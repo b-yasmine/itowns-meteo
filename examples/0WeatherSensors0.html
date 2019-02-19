@@ -51,9 +51,9 @@
             // **************** WEATHER SENSORS GLOBAL VARIABLES ************************
             // Urls of all sensors
             var allSensors = [
-                {text: 'Sonde YSH', value: 'piensg010:3001'},
-                {text: 'Sonde MCM', value: 'piensg009:3000'}, 
-                {text: 'Sonde BMW', value: 'piensg011:3001'}
+                {text: 'Sonde YSH', value: 'piensg010:3001', position: null},
+                {text: 'Sonde MCM', value: 'piensg009:3000', position: null}, 
+                {text: 'Sonde BMW', value: 'piensg011:3001', position: null}
             ];
             var markers = [];
             var colorPalette= [0xfc4a1a, 0x4abdac, 0xf7b733];
@@ -127,17 +127,19 @@
             function getPositions(){
                 var promises = [];
                 for (let i = 0; i < allSensors.length; i++) {
-                    promises.push(
-                        fetch('http://'+allSensors[i].value+'/last?capteur_type=location')
-                        .then(result => result.json())
-                        .catch(() => {
-                            return (
-                                // If sensor not working use the sample json files
-                                fetch('./json_samples/last_all_'+allSensors[i].value+'.json')
-                                .then(result => result.json())
-                            );
-                        })
-                    );
+                    if( allSensors[i].position == null) {
+                        promises.push(
+                            fetch('http://'+allSensors[i].value+'/last?capteur_type=location')
+                            .then(result => result.json())
+                            .catch(() => {
+                                return (
+                                    // If sensor not working use the sample json files
+                                    fetch('./json_samples/last_all_'+allSensors[i].value+'.json')
+                                    .then(result => result.json())
+                                );
+                            })
+                        );
+                    }
                 }
                 Promise.all(promises)
                 .then(promises => {
@@ -147,6 +149,7 @@
                                 lng: Number(promises[i].location.lng), 
                                 lat: Number(promises[i].location.lat) 
                             };
+                            allSensors[i].position = position;
                             addMarkerToScene(position, i); 
                             markers.push({
                                 sonde: allSensors[i].text, 
