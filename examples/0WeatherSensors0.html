@@ -158,6 +158,33 @@
                         }
                     }                   
                 })
+            }
+
+            // fetch a measurement type from all sensors
+            function getMeasurement(type){
+                var promises = [];
+                for (let i = 0; i < allSensors.length; i++) {
+                    promises.push(
+                        fetch('http://'+allSensors[i].value+'/last?capteur_type='+type)
+                        .then(result => result.json())
+                        .catch(() => {
+                            return (
+                                // If sensor not working use the sample json files
+                                fetch('./json_samples/last_all_'+allSensors[i].value+'.json')
+                                .then(result => result.json())
+                            );
+                        })
+                    );
+                }
+                Promise.all(promises)
+                .then(promises => {
+                    for (let i = 0; i < promises.length; i++) {
+                        if( promises[i] !=null && promises[i].measurements[type] !== undefined){
+                            var measurement = promises[i].measurements[type];
+                            console.log(measurement,i);
+                        }
+                    }                   
+                })    
             } 
 
             function addMarkerToScene(position, i) {
