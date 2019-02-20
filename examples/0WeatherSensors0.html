@@ -39,15 +39,12 @@
             var miniView;
             var minDistance = 10000000;
             var maxDistance = 30000000;
-
             // `viewerDiv` will contain iTowns' rendering area (`<canvas>`)
             var viewerDiv = document.getElementById('viewerDiv');
             var miniDiv = document.getElementById('miniDiv');
-
             // Instanciate iTowns GlobeView*
             var view = new itowns.GlobeView(viewerDiv, positionOnGlobe);
             setupLoadingScreen(viewerDiv, view);
-
             // **************** WEATHER SENSORS GLOBAL VARIABLES ************************
             // Urls of all sensors
             var allSensors = [
@@ -58,7 +55,6 @@
             var markers = [];
             var colorPalette= [0xfc4a1a, 0x4abdac, 0xf7b733];
             // ***************************************************************************
-
             // Dont' instance mini viewer if it's Test env
             miniView = new itowns.GlobeView(miniDiv, positionOnGlobe, {
                 // `limit globe' subdivision level:
@@ -69,12 +65,10 @@
                 // on the main view's one (see view.addFrameRequester)
                 noControls: true,
             });
-
             // Set a 0 alpha clear value (instead of the default '1')
             // because we want a transparent background for the miniglobe view to be able
             // to see the main view "behind"
             miniView.mainLoop.gfxEngine.renderer.setClearColor(0x000000, 0);
-
             // update miniview's camera with the view's camera position
             view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_RENDER, function updateMiniView() {
                 // clamp distance camera from globe
@@ -87,7 +81,6 @@
                 camera.lookAt(cameraTargetPosition);
                 miniView.notifyChange(camera);
             });
-
             // Add one imagery layer to the scene and the miniView
             // This layer is defined in a json file but it could be defined as a plain js
             // object. See Layer* for more info.
@@ -95,14 +88,11 @@
                 config.source = new itowns.WMTSSource(config.source);
                 var layer = new itowns.ColorLayer('Ortho', config);
                 view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe));
-
                 var miniLayer = new itowns.ColorLayer('OrthoMini', config);
                 miniView.addLayer(miniLayer);
             });
-
             var menuGlobe = new GuiTools('menuDiv', view);
             var divScaleWidget = document.querySelectorAll('.divScaleWidget')[0];
-
             function updateScaleWidget() {
                 var value = view.controls.pixelsToMeters(200);
                 value = Math.floor(value);
@@ -117,12 +107,8 @@
                 divScaleWidget.innerHTML = `${value} ${unit}`;
                 divScaleWidget.style.width = `${pix}px`;
             }
-
             // ********************************* METEO APP CALLS *************************************
-
-
             // ************************* WEATHER SENSORS APP FUNCTIONS DECLARATIONS ****************************
-
             // fetch location of all sensors
             function getPositions(){
                 var promises = [];
@@ -159,7 +145,6 @@
                     }                   
                 })
             }
-
             // fetch a measurement type from all sensors
             function getMeasurement(type){
                 var promises = [];
@@ -186,22 +171,17 @@
                     }                   
                 })    
             } 
-
             function addMarkerToScene(position, i) {
-
                 // creation of the new mesh (a cylinder)
                 var THREE = itowns.THREE;
                 var geometry = new THREE.CylinderGeometry(0, 20000, 60000, 16);
                 var material = new THREE.MeshBasicMaterial({ color: colorPalette[i] });
             
                 var mesh = new THREE.Mesh( geometry.translate(0, -30000, 0), material);
-
                 const coords = new itowns.Coordinates('EPSG:4326', position.lng, position.lat, 0); // Geographic system
                 const coordinates = coords.as('EPSG:4978'); // Geocentric system
-
                 // position of the mesh
                 var meshCoord = coordinates;
-
                 // position and orientation of the mesh
                 mesh.position.copy(meshCoord.as(view.referenceCrs).xyz());
                 mesh.lookAt(new THREE.Vector3(0, 0, 0));
@@ -213,7 +193,6 @@
                 // make the object usable from outside of the function
                 view.mesh = mesh;
             }
-
             function updateScaleMarker() {
                 for (let i = 0; i < markers.length; i++) {
                     var value = view.controls.pixelsToMeters(33) / 60000 ;
@@ -222,8 +201,39 @@
                 }
             }
 
-            // **************************************************************************************
+            // TEXT ENSG
+            var meshText;
+            function showText(){
+                var loader = new itowns.THREE.FontLoader();
+                loader.load( 'helvetiker_regular.typeface.json', function ( font ) {
+                var textGeometry = new itowns.THREE.TextGeometry( '10°C', {
+                        font: font,
+                        size: 50000,
+                        height: 2000,
+                        curveSegments: 120,
+                        bevelEnabled: true,
+                        bevelThickness: 1000,
+                        bevelSize: 8,
+                        bevelSegments: 100
+                    } );
+                meshText = new itowns.THREE.Mesh(textGeometry, new itowns.THREE.MeshNormalMaterial());
+                // Set the position
+                var coordENSG = new itowns.Coordinates('EPSG:4326', 2.59, 48.8410, 200000);             
+                meshText.position.copy(coordENSG.as(view.referenceCrs).xyz());
+                // Set the orientation
+                meshText.lookAt(new itowns.THREE.Vector3(0, 0, 0));
+                meshText.rotateX(-Math.PI / 2);
+                meshText.rotateY(Math.PI);
+                // update coordinate of the mesh
+                meshText.updateMatrixWorld();
+                // add the mesh to the scene
+                view.scene.add(meshText);
+                // make the object usable from outside of the function
+                view.mesh = meshText;
+                } );
+            }
 
+            // **************************************************************************************
             // Listen for globe full initialisation event
             view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function () {
                 // eslint-disable-next-line no-console
@@ -232,13 +242,13 @@
                 view.controls.setTilt(60, true);
                 //METEO APP CALL: get positions of all sensors
                 getPositions(); 
-
+                console.log("showing welou ?");
+                showText();
             });
             view.controls.addEventListener(itowns.CONTROL_EVENTS.RANGE_CHANGED, () => {
                 updateScaleWidget();
                 updateScaleMarker();
             });
-
         </script>
     </body>
 </html>
