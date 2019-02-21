@@ -335,9 +335,9 @@
                 this.meteo = ['press'];    
                 };
 
-            var text = new menuMeteo();
-
-            var listMeteo = menuGlobe.gui.add(text, 'meteo', [ 'press', 'temp', 'hygro', 'lum','wind_mean', 'wind_dir'] );
+            var lcapteurs = new menuMeteo();
+            
+            var listMeteo = menuGlobe.gui.add(lcapteurs, 'meteo', [ 'press', 'temp', 'hygro', 'lum','wind_mean', 'wind_dir'] );
             listMeteo.onChange(function(value) {
                 if((value != 'wind_mean') && (value != 'wind_dir')){
                     showMeasurementTexts(value) ;
