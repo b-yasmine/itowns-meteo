@@ -329,18 +329,16 @@
                 updateScaleMeshes(arrows, 40000, 22);
                 updateScaleMeshes(measurementTexts, 40000, 22);
             });
-
+            // **************************************MenuDiv************************************************
             // Choose from accepted values
-            var MenuText = function() {
-                this.meteo = ['press'];     
-                this.myImage = "temp.png"; 
-                
+            var menuMeteo = function() {
+                this.meteo = ['press'];    
                 };
 
-            var text = new MenuText();
+            var text = new menuMeteo();
 
-            var test = menuGlobe.gui.add(text, 'meteo', [ 'press', 'temp', 'hygro', 'lum','wind_mean', 'wind_dir'] );
-            test.onChange(function(value) {
+            var listMeteo = menuGlobe.gui.add(text, 'meteo', [ 'press', 'temp', 'hygro', 'lum','wind_mean', 'wind_dir'] );
+            listMeteo.onChange(function(value) {
                 if((value != 'wind_mean') && (value != 'wind_dir')){
                     showMeasurementTexts(value) ;
                 }else if (value == 'wind_mean'){
@@ -349,7 +347,6 @@
                     showWindArrows() ;
                 }
             });
-
         </script>
     </body>
 </html>
