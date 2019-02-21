@@ -195,6 +195,8 @@
             } 
             // Show the values of a certain measurement type for all sensors / markers
             function showMeasurementTexts(type){ 
+                removeMeshes(arrows);
+                removeMeshes(measurementTexts);
                 getMeasurement(type, addTextToScene);
             }
             // add a 3D text (measurement) to the scene
@@ -204,7 +206,7 @@
                     var textGeometry = new itowns.THREE.TextGeometry( ""+Math.round(measurement), {
                         font: font,
                         size: 100,
-                        height: 40,
+                        height: 25,
                         curveSegments: 6,
                         bevelEnabled: true,
                         bevelThickness: 5,
@@ -240,6 +242,7 @@
             }
             // Show an arrow that points to the wind direction for all sensors / markers
             function showWindArrows(){ 
+                removeMeshes(arrows);
                 getMeasurement("wind_dir", addArrowToScene);
             }
             // Show an arrow that points to an angle 'angle' on top of marker i
@@ -264,13 +267,13 @@
                     bevelSize: 1000, 
                     bevelThickness: 1000 
                 };
-                var material = new THREE.MeshBasicMaterial({ color: 0xcecece });
+                var material = new THREE.MeshPhongMaterial({ color: 0xcecece });
                 // 3D arrow (extruded)
                 var geometry = new THREE.ExtrudeBufferGeometry( shape, extrudeSettings );
                 // rotate arrow with wind direction angle in rad
                 geometry = geometry.rotateZ((angle * Math.PI / 180));
                 // translate arrow to top left corner
-                geometry = geometry.translate(40000, -100000, 0);
+                geometry = geometry.translate(48000, -100000, 0);
                 // create the mesh
                 var ArrowMesh = new THREE.Mesh(geometry, material);
                 // position the arrow mesh at the corresponding marker
@@ -300,18 +303,28 @@
                     meshes[i].mesh.updateMatrixWorld();
                 }
             }
+            // Remove meshes from scene
+            function removeMeshes(meshes){
+                for (let i = 0; i < meshes.length; i++) {
+                    view.scene.remove(meshes[i].mesh);     
+                }
+            }
             // **************************************************************************************
             // Listen for globe full initialisation event
             view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function () {
                 // eslint-disable-next-line no-console
                 console.info('Globe initialized');
+                // soft white light
+                var light = new itowns.THREE.AmbientLight(0x404040, 4); 
+                view.scene.add( light );
                 updateScaleWidget();
                 view.controls.setTilt(30, true);
-                //METEO APP CALL: get positions of all sensors
+                // METEO APP CALL: get positions of all sensors
                 getPositions(); 
             });
             view.controls.addEventListener(itowns.CONTROL_EVENTS.RANGE_CHANGED, () => {
                 updateScaleWidget();
+                // METEO APP CALL: update scale according to zoom
                 updateScaleMeshes(markers, 60000, 33);
                 updateScaleMeshes(arrows, 40000, 22);
                 updateScaleMeshes(measurementTexts, 40000, 22);
