@@ -225,6 +225,9 @@
                     meshText.lookAt(new itowns.THREE.Vector3(0, 0, 0));
                     meshText.rotateX(-Math.PI / 2);
                     meshText.rotateY(Math.PI);
+                    // Adapting the scale to the zoom
+                    var value = view.controls.pixelsToMeters(40000)/22;
+                    meshText.scale.set(value,value,value);
                     // update coordinate of the mesh
                     meshText.updateMatrixWorld();
                     // add the mesh to the scene
@@ -277,11 +280,14 @@
                     markers[i].mesh.position.z );
                 ArrowMesh.lookAt(new THREE.Vector3(0, 0, 0));
                 ArrowMesh.rotateX(Math.PI / 2);
+                // Adapting the scale to the zoom
+                var value = view.controls.pixelsToMeters(40000)/22;
+                ArrowMesh.scale.set(value,value,value);
                 //update coordinate of the mesh
                 ArrowMesh.updateMatrixWorld();
                 // add the mesh to the scene
                 view.scene.add(ArrowMesh);
-                // // Keeping mesh in the arrows global variable
+                // Keeping mesh in the arrows global variable
                 arrows.push({
                     mesh: ArrowMesh
                 });
