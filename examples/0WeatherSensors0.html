@@ -332,7 +332,8 @@
 
             // Choose from accepted values
             var MenuText = function() {
-                this.meteo = ['press'];      
+                this.meteo = ['press'];     
+                this.myImage = "temp.png"; 
                 
                 };
 
@@ -340,7 +341,13 @@
 
             var test = menuGlobe.gui.add(text, 'meteo', [ 'press', 'temp', 'hygro', 'lum','wind_mean', 'wind_dir'] );
             test.onChange(function(value) {
-                showMeasurementTexts(value) ;
+                if((value != 'wind_mean') && (value != 'wind_dir')){
+                    showMeasurementTexts(value) ;
+                }else if (value == 'wind_mean'){
+                    showMeasurementTexts(value) ;
+                }else{
+                    showWindArrows() ;
+                }
             });
 
         </script>
