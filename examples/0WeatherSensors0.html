@@ -332,15 +332,15 @@
 
             // Choose from accepted values
             var MenuText = function() {
-                this.meteo = ['press'];               
+                this.meteo = ['press'];      
                 
                 };
 
             var text = new MenuText();
 
-            var test = menuGlobe.gui.add(text, 'meteo', [ 'press', 'chrome', 'hygro', 'lum','wind_mean', 'wind_dir' ] );
+            var test = menuGlobe.gui.add(text, 'meteo', [ 'press', 'temp', 'hygro', 'lum','wind_mean', 'wind_dir'] );
             test.onChange(function(value) {
-                alert(value);
+                showMeasurementTexts(value) ;
             });
 
         </script>
