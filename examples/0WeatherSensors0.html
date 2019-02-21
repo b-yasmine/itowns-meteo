@@ -55,6 +55,7 @@
             var colorPalette= [0xfc4a1a, 0x4abdac, 0xf7b733];
             var markers = [];
             var arrows = [];
+            var measurementTexts = [];
             // ***************************************************************************
             // Dont' instance mini viewer if it's Test env
             miniView = new itowns.GlobeView(miniDiv, positionOnGlobe, {
@@ -137,43 +138,35 @@
                                 lat: Number(promises[i].location.lat) 
                             };
                             allSensors[i].position = position;
-                            addMarkerToScene(position, i); 
-                            markers.push({
-                                sonde: allSensors[i].text, 
-                                mesh: view.mesh
-                            })
+                            addMarkerToScene(position, i);
                         }
                     }                   
                 })
             }
-
+            // Add a marker to the scene at the position "position"
             function addMarkerToScene(position, i) {
-
                 // creation of the new mesh (a cylinder)
                 var THREE = itowns.THREE;
                 var geometry = new THREE.CylinderGeometry(0, 20000, 60000, 16);
                 var material = new THREE.MeshBasicMaterial({ color: colorPalette[i] });
-            
-                var mesh = new THREE.Mesh( geometry.translate(0, -30000, 0), material);
-
+                var markerMesh = new THREE.Mesh( geometry.translate(0, -30000, 0), material);
                 const coords = new itowns.Coordinates('EPSG:4326', position.lng, position.lat, 0); // Geographic system
                 const coordinates = coords.as('EPSG:4978'); // Geocentric system
-
                 // position of the mesh
                 var meshCoord = coordinates;
-
                 // position and orientation of the mesh
-                mesh.position.copy(meshCoord.as(view.referenceCrs).xyz());
-                mesh.lookAt(new THREE.Vector3(0, 0, 0));
-                mesh.rotateX(Math.PI / 2);
+                markerMesh.position.copy(meshCoord.as(view.referenceCrs).xyz());
+                markerMesh.lookAt(new THREE.Vector3(0, 0, 0));
+                markerMesh.rotateX(Math.PI / 2);
                 // update coordinate of the mesh
-                mesh.updateMatrixWorld();
+                markerMesh.updateMatrixWorld();
                 // add the mesh to the scene
-                view.scene.add(mesh);
-                // make the object usable from outside of the function
-                view.mesh = mesh;
+                view.scene.add(markerMesh);
+                // Keeping mesh in the markers global variable
+                markers.push({
+                    mesh: markerMesh
+                })
             }
-
             // fetch a measurement type from all sensors and pass it to the callback function
             function getMeasurement(type, callback){
                 var promises = [];
@@ -200,43 +193,53 @@
                     }                   
                 })    
             } 
-            function addMarkerToScene(position, i) {
-                // creation of the new mesh (a cylinder)
-                var THREE = itowns.THREE;
-                var geometry = new THREE.CylinderGeometry(0, 20000, 60000, 16);
-                var material = new THREE.MeshBasicMaterial({ color: colorPalette[i] });
-            
-                var mesh = new THREE.Mesh( geometry.translate(0, -30000, 0), material);
-                const coords = new itowns.Coordinates('EPSG:4326', position.lng, position.lat, 0); // Geographic system
-                const coordinates = coords.as('EPSG:4978'); // Geocentric system
-                // position of the mesh
-                var meshCoord = coordinates;
-                // position and orientation of the mesh
-                mesh.position.copy(meshCoord.as(view.referenceCrs).xyz());
-                mesh.lookAt(new THREE.Vector3(0, 0, 0));
-                mesh.rotateX(Math.PI / 2);
-                //update coordinate of the mesh
-                mesh.updateMatrixWorld();
-                // add the mesh to the scene
-                view.scene.add(mesh);
-                // make the object usable from outside of the function
-                view.mesh = mesh;
+            // Show the values of a certain measurement type for all sensors / markers
+            function showMeasurementTexts(type){ 
+                getMeasurement(type, addTextToScene);
             }
-
-            // Show an arrow that points to the wind direction for all sensors / markers
-            function showWindArrows(){ 
-                getMeasurement("wind_dir", showWindArrow_callback);
-            }
-            
-            // Callback function that creates an oriented arrow using the wind_dir measurement
-            function showWindArrow_callback(angle,i){
-                addArrowToScene(angle,i);
-                // Keeping arrows as a global variable
-                arrows.push({
-                    mesh: view.mesh
+            // add a 3D text (measurement) to the scene
+            function addTextToScene(measurement, i){
+                var loader = new itowns.THREE.FontLoader();
+                loader.load( 'helvetiker_regular.typeface.json', function ( font ) {
+                    var textGeometry = new itowns.THREE.TextGeometry( ""+Math.round(measurement), {
+                        font: font,
+                        size: 100,
+                        height: 40,
+                        curveSegments: 6,
+                        bevelEnabled: true,
+                        bevelThickness: 5,
+                        bevelSize: 4,
+                        bevelSegments: 5
+                    });
+                    textGeometry.center();
+                    textGeometry.scale(400,400,400);
+                    textGeometry.translate(0,100000,0);
+                    var material = new itowns.THREE.MeshPhongMaterial({ color: 0xcecece });
+                    var meshText = new itowns.THREE.Mesh(textGeometry, material);
+                    // Set the position
+                    meshText.position.set( 
+                        markers[i].mesh.position.x, 
+                        markers[i].mesh.position.y, 
+                        markers[i].mesh.position.z );
+                    // Set the orientation
+                    meshText.lookAt(new itowns.THREE.Vector3(0, 0, 0));
+                    meshText.rotateX(-Math.PI / 2);
+                    meshText.rotateY(Math.PI);
+                    // update coordinate of the mesh
+                    meshText.updateMatrixWorld();
+                    // add the mesh to the scene
+                    view.scene.add(meshText);
+                    // Keeping mesh in the measurementText global variable
+                    measurementTexts.push({
+                        mesh: meshText
+                    });
                 });
             }
-            
+            // Show an arrow that points to the wind direction for all sensors / markers
+            function showWindArrows(){ 
+                getMeasurement("wind_dir", addArrowToScene);
+            }
+            // Show an arrow that points to an angle 'angle' on top of marker i
             function addArrowToScene(angle,i) {
                 var THREE = itowns.THREE;
                 // draw 2D arrow
@@ -266,23 +269,24 @@
                 // translate arrow to top left corner
                 geometry = geometry.translate(40000, -100000, 0);
                 // create the mesh
-                var mesh = new THREE.Mesh(geometry, material);
+                var ArrowMesh = new THREE.Mesh(geometry, material);
                 // position the arrow mesh at the corresponding marker
-                mesh.position.set( 
+                ArrowMesh.position.set( 
                     markers[i].mesh.position.x, 
                     markers[i].mesh.position.y, 
                     markers[i].mesh.position.z );
-                mesh.lookAt(new THREE.Vector3(0, 0, 0));
-                mesh.rotateX(Math.PI / 2);
+                ArrowMesh.lookAt(new THREE.Vector3(0, 0, 0));
+                ArrowMesh.rotateX(Math.PI / 2);
                 //update coordinate of the mesh
-                mesh.updateMatrixWorld();
+                ArrowMesh.updateMatrixWorld();
                 // add the mesh to the scene
-                view.scene.add(mesh);
-                // make the object usable from outside of the function
-                view.mesh = mesh;
+                view.scene.add(ArrowMesh);
+                // // Keeping mesh in the arrows global variable
+                arrows.push({
+                    mesh: ArrowMesh
+                });
             }
-
-            // 
+            // Change mesh scale according to zoom
             function updateScaleMeshes(meshes, meterValue, pixelValue) {
                 for (let i = 0; i < meshes.length; i++) {
                     var value = view.controls.pixelsToMeters(pixelValue) / meterValue;
@@ -290,39 +294,6 @@
                     meshes[i].mesh.updateMatrixWorld();
                 }
             }
-
-            // TEXT ENSG
-            var meshText;
-            function showText(){
-                var loader = new itowns.THREE.FontLoader();
-                loader.load( 'helvetiker_regular.typeface.json', function ( font ) {
-                var textGeometry = new itowns.THREE.TextGeometry( '10°C', {
-                        font: font,
-                        size: 50000,
-                        height: 2000,
-                        curveSegments: 120,
-                        bevelEnabled: true,
-                        bevelThickness: 1000,
-                        bevelSize: 8,
-                        bevelSegments: 100
-                    } );
-                meshText = new itowns.THREE.Mesh(textGeometry, new itowns.THREE.MeshNormalMaterial());
-                // Set the position
-                var coordENSG = new itowns.Coordinates('EPSG:4326', 2.59, 48.8410, 200000);             
-                meshText.position.copy(coordENSG.as(view.referenceCrs).xyz());
-                // Set the orientation
-                meshText.lookAt(new itowns.THREE.Vector3(0, 0, 0));
-                meshText.rotateX(-Math.PI / 2);
-                meshText.rotateY(Math.PI);
-                // update coordinate of the mesh
-                meshText.updateMatrixWorld();
-                // add the mesh to the scene
-                view.scene.add(meshText);
-                // make the object usable from outside of the function
-                view.mesh = meshText;
-                } );
-            }
-
             // **************************************************************************************
             // Listen for globe full initialisation event
             view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function () {
@@ -332,13 +303,12 @@
                 view.controls.setTilt(30, true);
                 //METEO APP CALL: get positions of all sensors
                 getPositions(); 
-                console.log("showing welou ?");
-                showText();
             });
             view.controls.addEventListener(itowns.CONTROL_EVENTS.RANGE_CHANGED, () => {
                 updateScaleWidget();
                 updateScaleMeshes(markers, 60000, 33);
                 updateScaleMeshes(arrows, 40000, 22);
+                updateScaleMeshes(measurementTexts, 40000, 22);
             });
         </script>
     </body>
