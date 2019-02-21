@@ -329,6 +329,20 @@
                 updateScaleMeshes(arrows, 40000, 22);
                 updateScaleMeshes(measurementTexts, 40000, 22);
             });
+
+            // Choose from accepted values
+            var MenuText = function() {
+                this.meteo = ['press'];               
+                
+                };
+
+            var text = new MenuText();
+
+            var test = menuGlobe.gui.add(text, 'meteo', [ 'press', 'chrome', 'hygro', 'lum','wind_mean', 'wind_dir' ] );
+            test.onChange(function(value) {
+                alert(value);
+            });
+
         </script>
     </body>
 </html>
