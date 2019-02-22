@@ -93,7 +93,7 @@
                 var miniLayer = new itowns.ColorLayer('OrthoMini', config);
                 miniView.addLayer(miniLayer);
             });
-            var menuGlobe = new GuiTools('menuDiv', view);
+            var menuGlobe = new GuiTools('menuDiv', view, 550);
             var divScaleWidget = document.querySelectorAll('.divScaleWidget')[0];
             function updateScaleWidget() {
                 var value = view.controls.pixelsToMeters(200);
@@ -168,7 +168,7 @@
                 })
             }
             // fetch a measurement type from all sensors and pass it to the callback function
-            function getMeasurement(type, callback){
+            function getMeasurement(type, callback, unit){
                 var promises = [];
                 for (let i = 0; i < allSensors.length; i++) {
                     promises.push(
@@ -188,22 +188,22 @@
                     for (let i = 0; i < promises.length; i++) {
                         if( promises[i] !=null && promises[i].measurements[type] !== undefined){
                             var measurement = promises[i].measurements[type];
-                            callback(measurement,i);
+                            callback(measurement,i,unit);
                         }
                     }                   
                 })    
             } 
             // Show the values of a certain measurement type for all sensors / markers
-            function showMeasurementTexts(type){ 
+            function showMeasurementTexts(type, unit){ 
                 removeMeshes(arrows);
                 removeMeshes(measurementTexts);
-                getMeasurement(type, addTextToScene);
+                getMeasurement(type, addTextToScene, unit);
             }
             // add a 3D text (measurement) to the scene
-            function addTextToScene(measurement, i){
+            function addTextToScene(measurement, i, unit){
                 var loader = new itowns.THREE.FontLoader();
                 loader.load( 'helvetiker_regular.typeface.json', function ( font ) {
-                    var textGeometry = new itowns.THREE.TextGeometry( ""+Math.round(measurement), {
+                    var textGeometry = new itowns.THREE.TextGeometry( ""+Math.round(measurement)+" "+unit, {
                         font: font,
                         size: 100,
                         height: 25,
@@ -273,7 +273,7 @@
                 // rotate arrow with wind direction angle in rad
                 geometry = geometry.rotateZ((angle * Math.PI / 180));
                 // translate arrow to top left corner
-                geometry = geometry.translate(48000, -100000, 0);
+                geometry = geometry.translate(98000, -100000, 0);
                 // create the mesh
                 var ArrowMesh = new THREE.Mesh(geometry, material);
                 // position the arrow mesh at the corresponding marker
@@ -332,18 +332,22 @@
             // **************************************MenuDiv************************************************
             // Choose from accepted values
             var menuMeteo = function() {
-                this.meteo = ['press'];    
+                this.meteo = ['Please choose a measurement type'];  
+                this.information = 'Copyright ENSG';
                 };
 
             var lcapteurs = new menuMeteo();
             
-            var listMeteo = menuGlobe.gui.add(lcapteurs, 'meteo', [ 'press', 'temp', 'hygro', 'lum','wind_mean', 'wind_dir'] );
+            var listMeteo = menuGlobe.gui.add(lcapteurs, 'meteo', ['Please choose a measurement type',
+                 'press hP', 'temp °C', 'hygro %', 'lum Lux','wind_mean Kts (mean speed and direction)'] );
             listMeteo.onChange(function(value) {
-                if((value != 'wind_mean') && (value != 'wind_dir')){
-                    showMeasurementTexts(value) ;
-                }else if (value == 'wind_mean'){
-                    showMeasurementTexts(value) ;
-                }else{
+                var type = value.split(" ")[0];
+                var unit =  value.split(" ")[1];
+                console.log(type,unit);
+                if((type != 'wind_mean')){
+                    showMeasurementTexts(type, unit) ;
+                }else if (type == 'wind_mean'){
+                    showMeasurementTexts(type, unit) ;
                     showWindArrows() ;
                 }
             });
